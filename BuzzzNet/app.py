@@ -1,5 +1,5 @@
 #Importing Dependencies
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template, redirect, url_for, flash
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
 from wtforms import StringField, BooleanField, PasswordField
@@ -45,7 +45,7 @@ class RegisterForm(FlaskForm):
 
 
 #Login
-@app.route('/login/',methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])
 def login():
     options = [
     {"name":"Sign Up","selected":False,"link":url_for("signup")},
@@ -55,13 +55,13 @@ def login():
     {"name":"New Post","selected":False,"link":url_for("newPost")}
     ]
     form = LoginForm()
-	
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         if user:
             login_user(user, remember=form.remember.data)
             if check_password_hash(user.password, form.password.data):
-                return redirect(url_for('feeds'))
+                #return redirect(url_for('welcome'))
+                return render_template('feed.html')
 
     #return "<h1>" + "Invalid Username or password" + "</h1>"
     # flash("Invalid Username or Password")
@@ -82,8 +82,8 @@ def signup():
 
     if form.validate_on_submit():
         hashed_password = generate_password_hash(form.password.data, method='sha256')
-        # if User.query.filter_by(username=form.username.data).first() == form.username.data:
-        #     flash("Username already exits!")
+        if User.query.filter_by(username=form.username.data).first() == form.username.data:
+            flash("Username already exits!")
         # else:
         new_user = User(username=form.username.data, email=form.email.data, password=hashed_password)
         db.session.add(new_user)
@@ -102,8 +102,13 @@ def logout():
 	return redirect(url_for('login'))
 
 
+@app.route('/welcome')
+@login_required
+def welcome():
+    return render_template('hello.html')
+
+
 #Feeds
-@app.route('/')
 @app.route("/feeds/")
 def getFeeds():
     options = [
