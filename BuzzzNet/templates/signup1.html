@@ -1,0 +1,25 @@
+{% extends "main.html" %}
+{% block content %}
+
+  <h3>Sign Up</h3>
+  <p> <form method="POST" action="">
+
+    {{ signup_form.hidden_tag() }}
+<label for="uname"><b>Username</b></label><br>
+{{ signup_form.usernames(class="in")}}<br>
+<label for="uname"><b>E-mail</b></label><br>
+{{ signup_form.emails(class="in")}}<br>
+<label for="psw"><b>Password</b></label><br>
+{{ signup_form.passwords(class="in")}}<br>
+<label for="psw"><b>Confirm Password</b></label><br>
+{{ signup_form.confirm_passwords(class="in")}}
+<br><br>
+
+  {{ signup_form.submits(class="SubmitButton") }}
+</form>
+  </p>
+</div>
+
+
+
+{% endblock %}
