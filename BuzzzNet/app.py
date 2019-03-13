@@ -1,31 +1,28 @@
-from flask import Flask, render_template, redirect, url_for, flash
+#Importing Dependencies
+from flask import Flask, render_template, redirect, url_for
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
 from wtforms import StringField, BooleanField, PasswordField
 from wtforms.validators import InputRequired, Email, Length
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-import os
 import os.path
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secret'
 
+app.config['SECRET_KEY'] = 'secret'
 db_path = os.path.join(os.path.dirname(__file__),'database.db')
 db_uri = 'sqlite:///{}'.format(db_path)
 app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
-
-
 Bootstrap(app)
-
-
 db = SQLAlchemy(app)
-login_manager = LoginManager() 
+
+login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-
+#Defining the tables
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(15), unique=True)
@@ -46,24 +43,41 @@ class RegisterForm(FlaskForm):
     username = StringField('username', validators=[InputRequired(), Length(min=4, max=15)])
     password = PasswordField('password', validators=[InputRequired(), Length(min=8, max=80)])
 
-@app.route('/',methods=['GET', 'POST'])
+
+#Login
+@app.route('/login/',methods=['GET', 'POST'])
 def login():
-	form = LoginForm()
+    options = [
+    {"name":"Sign Up","selected":False,"link":url_for("signup")},
+    {"name":"Feed","selected":False,"link":url_for("getFeeds")},
+    {"name":"My Profile","selected":False,"link":url_for("getProfile")},
+    #{"name":"My Network","selected":False,"link":url_for("getFriends")},
+    {"name":"New Post","selected":False,"link":url_for("newPost")}
+    ]
+    form = LoginForm()
 	
-	if form.validate_on_submit():
-		user = User.query.filter_by(username=form.username.data).first()
-		if user:
-			login_user(user, remember=form.remember.data)
-			if check_password_hash(user.password, form.password.data):
-				return redirect(url_for('welcome'))
-		
-		return "<h1>" + "Invalid Username or password" + "</h1>"
-		# flash("Invalid Username or Password")
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=form.username.data).first()
+        if user:
+            login_user(user, remember=form.remember.data)
+            if check_password_hash(user.password, form.password.data):
+                return redirect(url_for('feeds'))
 
-	return render_template('login.html',form = form)
+    #return "<h1>" + "Invalid Username or password" + "</h1>"
+    # flash("Invalid Username or Password")
+    return render_template('login.html',form = form, nav_options = options)
 
+
+#SignUp
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
+    options = [
+    {"name":"Login","selected":False,"link":url_for("login")},
+    {"name":"Feed","selected":False,"link":url_for("getFeeds")},
+    {"name":"My Profile","selected":False,"link":url_for("getProfile")},
+    #{"name":"My Network","selected":False,"link":url_for("getFriends")},
+    {"name":"New Post","selected":False,"link":url_for("newPost")}
+    ]
     form = RegisterForm()
 
     if form.validate_on_submit():
@@ -75,22 +89,56 @@ def signup():
         db.session.add(new_user)
         db.session.commit()
 
-        return '<h1>New user has been created!</h1>'
+        #return '<h1>New user has been created!</h1>'
         #return '<h1>' + form.username.data + ' ' + form.email.data + ' ' + form.password.data + '</h1>'
 
-    return render_template('signup.html', form=form)
+    return render_template('signup.html', form=form, nav_options = options)
 
-@app.route('/welcome')
-@login_required
-def welcome():
-    return render_template('hello.html')
-
-
-@app.route('/logout')
+#LogOut
+@app.route('/logout/')
 @login_required
 def logout():
 	logout_user()
 	return redirect(url_for('login'))
+
+
+#Feeds
+@app.route('/')
+@app.route("/feeds/")
+def getFeeds():
+    options = [
+    {"name":"Login","selected":False,"link":url_for("login")},#this is just temporary
+    {"name":"Feed","selected":True,"link":url_for("getFeeds")},
+    {"name":"My Profile","selected":False,"link":url_for("getProfile")},
+    #{"name":"My Network","selected":False,"link":url_for("getFriends")},
+    {"name":"New Post","selected":False,"link":url_for("newPost")}
+    ]
+    return render_template("feed.html",title="Feed", nav_options = options)
+
+
+#Profiles Page
+@app.route("/profile/")
+def getProfile():
+    options = [
+    {"name":"Feed","selected":False,"link":url_for("getFeeds")},
+    {"name":"My Profile","selected":True,"link":url_for("getProfile")},
+    #{"name":"My Network","selected":False,"link":url_for("getFriends")},
+    {"name":"New Post","selected":False,"link":url_for("newPost")}
+    ]
+    return render_template("profile.html",title="Profile",nav_options= options)
+
+
+#newPost
+@app.route("/post/new/",methods = ['GET','POST'])
+def newPost():
+    options = [
+    {"name":"Feed","selected":False,"link":url_for("getFeeds")},
+    {"name":"My Profile","selected":False,"link":url_for("getProfile")},
+    #{"name":"My Network","selected":False,"link":url_for("getFriends")},
+    {"name":"New Post","selected":True,"link":url_for("newPost")}
+    ]
+    return render_template("newpost.html",title="newpost",nav_options= options)
+
 
 
 if __name__=='__main__':
