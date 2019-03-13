@@ -1,16 +1,6 @@
 {% extends "main.html" %}
 {% block content %}
-		<ul class="nav nav-tabs" id="myTab" role="tablist">
-		  <li class="nav-item">
-		    <a class="nav-link active"  data-toggle="tab" href="#login" role="tab" aria-controls="login" aria-selected="true">Login to BuzzNet</a>
-			</li>
-		  <li class="nav-item">
-		    <a class="nav-link"  data-toggle="tab" href="#signup" role="tab" aria-controls="signup" aria-selected="false">Sign Up with BuzzNet</a>
-		  </li>
-		  <li class="nav-item">
-		    <a class="nav-link"  data-toggle="tab" href="#about" role="tab" aria-controls="about" aria-selected="false">About Us</a>
-		  </li>
-		</ul>
+		
 
 		<div class="tab-content">
 		  <div id="login" class="tab-pane fade active show">
@@ -30,30 +20,7 @@
 </form>
 				</p>
 		  </div>
-		  <!--<div id="signup" class="tab-pane fade">
-		    <h3>Sign Up</h3>
-		    <p> <form method="POST" action="">
 
-					{{ signup_form.hidden_tag() }}
-      <label for="uname"><b>Username</b></label><br>
-      {{ signup_form.usernames(class="in")}}<br>
-      <label for="uname"><b>E-mail</b></label><br>
-      {{ signup_form.emails(class="in")}}<br>
-      <label for="psw"><b>Password</b></label><br>
-      {{ signup_form.passwords(class="in")}}<br>
-  	<label for="psw"><b>Confirm Password</b></label><br>
-      {{ signup_form.confirm_passwords(class="in")}}
-      <br><br>
 
-        {{signup_form.submits(class="SubmitButton")}}
-</form>
-				</p>
-		  </div>-->
-		  <div id="about" class="tab-pane fade">
-		    <h3>About Us</h3>
-		    <p>
-					How bout dat?
-				</p>
-		  </div>
 		</div>
 {% endblock %}

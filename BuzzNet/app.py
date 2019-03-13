@@ -2,7 +2,7 @@ from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager,UserMixin,login_user, current_user, login_required, logout_user
 import forms.login as loginForm
-import forms.registration as signup
+import forms.registration as sign_up
 import requests
 app = Flask(__name__)
 
@@ -45,46 +45,52 @@ def getFeeds():
     {"name":"New Post","selected":False,"link":url_for("newPost")}
     ]
     return render_template("feed.html",title="Feed", nav_options = options, newpost = NewPost.query.all())
-
+@app.route("/signup/",methods=["GET","POST"])
+def signup():
+    options = [
+    {"name":"Login","selected":False,"link":url_for("login")},
+    {"name":"Feed","selected":False,"link":url_for("getFeeds")},
+    {"name":"My Profile","selected":False,"link":url_for("getProfile")},
+    {"name":"My Network","selected":False,"link":url_for("getFriends")},
+    {"name":"New Post","selected":False,"link":url_for("newPost")}
+    ]
+    signup_form = sign_up.RegistrationForm()
+    if signup_form.validate_on_submit():
+        print("Checking signup form")
+        if User.query.filter_by(email=signup_form.emails.data).first():
+            flash("E-mail already in use")
+            return redirect("/register")
+        elif User.query.filter_by(username=signup_form.usernames.data).first():
+            flash("Username already in use")
+            return redirect("/register")
+        elif signup_form.passwords.data != signup_form.confirm_passwords.data:
+            flash("Password mismatch")
+            return redirect("/register")
+        else:
+            db.session.add(User(id=len(User.query.all()), username=signup_form.usernames.data,email=signup_form.emails.data,password=hashlib.sha512(bytes(signup_form.passwords.data + app.config['PSK_HASH_KEY'],'utf8')).hexdigest()))
+            db.session.commit()
+            return redirect("/login")
+    return render_template("signup.html",title="Login",nav_options= options,signup_form = signup_form)
 @app.route("/login/",methods=["GET","POST"])
 def login():
     options = [
+    {"name":"Sign Up","selected":False,"link":url_for("signup")},
     {"name":"Feed","selected":False,"link":url_for("getFeeds")},
     {"name":"My Profile","selected":False,"link":url_for("getProfile")},
     {"name":"My Network","selected":False,"link":url_for("getFriends")},
     {"name":"New Post","selected":False,"link":url_for("newPost")}
     ]
     login_form = loginForm.LoginForm()
-    signup_form = signup.RegistrationForm(prefix="signup_form")
-    print("Checking form")
-    if request.method == "POST":
-        #print(login_form.)
-        if login_form.validate():
-            #print("Checking login form",login_form.validate_on_submit(),signup_form.validate_on_submit())
+
+    if login_form.validate_on_submit():
             if User.query.filter_by(email=login_form.emaill.data).first():
                 if hashlib.sha512(bytes(login_form.passwordl.data + app.config['PSK_HASH_KEY'],'utf8')).hexdigest() == User.query.filter_by(email=login_form.emaill.data).first().password:
                     login_user(User.query.filter_by(email=login_form.emaill.data).first())
                     return redirect(url_for(getFeeds))
                 else:
                     return redirect(url_for(login))
-        if signup_form.validate():
-            print("Checking signup form")
-            if User.query.filter_by(email=signup_form.emails.data).first():
-                flash("E-mail already in use")
-                return redirect("/register")
-            elif User.query.filter_by(username=signup_form.usernames.data).first():
-                flash("Username already in use")
-                return redirect("/register")
-            elif signup_form.passwords.data != signup_form.confirm_passwords.data:
-                flash("Password mismatch")
-                return redirect("/register")
-            else:
+    return render_template("authenticate.html",title="Login",nav_options= options,login_form = login_form)
 
-                db.session.add(User(id=len(User.query.all()), username=signup_form.usernames.data,email=signup_form.emails.data,password=hashlib.sha512(bytes(signup_form.passwords.data + app.config['PSK_HASH_KEY'],'utf8')).hexdigest()))
-                db.session.commit()
-                #flash("Password mismatch")
-                return redirect("/login")
-    return render_template("authenticate.html",title="Login",nav_options= options,login_form = login_form,signup_form = signup_form)
 @app.route("/friends/")
 def getFriends():
     options = [
