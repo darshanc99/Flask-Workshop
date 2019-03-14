@@ -104,7 +104,7 @@ def signup():
 
         #return '<h1>New user has been created!</h1>'
         #return '<h1>' + form.username.data + ' ' + form.email.data + ' ' + form.password.data + '</h1>'
-        return redirect(login)
+        return redirect(url_for('login'))
     return render_template('signup.html', form=form, nav_options = options)
 
 #LogOut
