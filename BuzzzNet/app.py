@@ -77,10 +77,7 @@ def login():
                 login_user(user, remember=form.remember.data)
 
                 return redirect(url_for('getFeeds'))
-
-    #return "<h1>" + "Invalid Username or password" + "</h1>"
-    # flash("Invalid Username or Password")
-    return render_template('login.html',form = form, nav_options = options)
+    return render_template('login.html',title="Log In",form = form, nav_options = options)
 
 
 #SignUp
@@ -107,7 +104,7 @@ def signup():
         #return '<h1>New user has been created!</h1>'
         #return '<h1>' + form.username.data + ' ' + form.email.data + ' ' + form.password.data + '</h1>'
         return redirect(url_for('login'))
-    return render_template('signup.html', form=form, nav_options = options)
+    return render_template('signup.html',title="Sign Up", form=form, nav_options = options)
 
 #LogOut
 @app.route('/logout')
