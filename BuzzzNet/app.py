@@ -8,6 +8,8 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import os.path
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from sqlalchemy import desc
+
 
 app = Flask(__name__)
 
@@ -133,7 +135,7 @@ def getFeeds():
     {"name":"New Post","selected":False,"link":url_for("newPost")}
     ]
 
-    return render_template("feed.html",title="Feed", nav_options = options ,Post_data = NewPost.query.order_by("id desc").all())
+    return render_template("feed.html",title="Feed", nav_options = options ,Post_data = NewPost.query.order_by(desc(NewPost.id)).all())
 
 
 #Profiles Page
