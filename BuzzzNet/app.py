@@ -7,7 +7,7 @@ from wtforms.validators import InputRequired, Email, Length
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import os.path
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 
 app = Flask(__name__)
 
@@ -28,6 +28,14 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(15), unique=True)
     email = db.Column(db.String(50), unique=True)
     password = db.Column(db.String(80))
+class NewPost(UserMixin,db.Model):
+    id = db.Column(db.Integer,primary_key = True)
+    username = db.Column(db.String(15))
+    caption = db.Column(db.String(1000))
+    message = db.Column(db.String(100))
+    def __repr__(self):
+        return f"NewPost('{self.id}','{self.caption}','{self.message}')"
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -43,9 +51,13 @@ class RegisterForm(FlaskForm):
     username = StringField('username', validators=[InputRequired(), Length(min=4, max=15)])
     password = PasswordField('password', validators=[InputRequired(), Length(min=8, max=80)])
 
+class NewPostForm(FlaskForm):
+    Caption = StringField('Caption', validators=[InputRequired()])
+    message = StringField('Message', validators=[InputRequired()], render_kw = {'rows':7})
+
 
 #Login
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/login/', methods=['GET', 'POST'])
 def login():
     options = [
     {"name":"Sign Up","selected":False,"link":url_for("signup")},
@@ -58,10 +70,11 @@ def login():
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         if user:
-            login_user(user, remember=form.remember.data)
-            if check_password_hash(user.password, form.password.data):
+            if check_password_hash(user.password,form.password.data):
                 #return redirect(url_for('welcome'))
-                return render_template('feed.html')
+                login_user(user, remember=form.remember.data)
+
+                return redirect(url_for('getFeeds'))
 
     #return "<h1>" + "Invalid Username or password" + "</h1>"
     # flash("Invalid Username or Password")
@@ -91,17 +104,17 @@ def signup():
 
         #return '<h1>New user has been created!</h1>'
         #return '<h1>' + form.username.data + ' ' + form.email.data + ' ' + form.password.data + '</h1>'
-
+        return redirect(login)
     return render_template('signup.html', form=form, nav_options = options)
 
 #LogOut
-@app.route('/logout/')
+@app.route('/logout')
 @login_required
 def logout():
 	logout_user()
 	return redirect(url_for('login'))
 
-
+@app.route("/")
 @app.route('/welcome')
 @login_required
 def welcome():
@@ -109,22 +122,26 @@ def welcome():
 
 
 #Feeds
-@app.route("/feeds/")
+@app.route("/feeds")
+@login_required
 def getFeeds():
     options = [
-    {"name":"Login","selected":False,"link":url_for("login")},#this is just temporary
+    {"name":"Log out","selected":False,"link":url_for("logout")},
     {"name":"Feed","selected":True,"link":url_for("getFeeds")},
     {"name":"My Profile","selected":False,"link":url_for("getProfile")},
     #{"name":"My Network","selected":False,"link":url_for("getFriends")},
     {"name":"New Post","selected":False,"link":url_for("newPost")}
     ]
-    return render_template("feed.html",title="Feed", nav_options = options)
+
+    return render_template("feed.html",title="Feed", nav_options = options ,Post_data = NewPost.query.order_by("id desc").all())
 
 
 #Profiles Page
-@app.route("/profile/")
+@app.route("/profile")
+@login_required
 def getProfile():
     options = [
+    {"name":"Log out","selected":False,"link":url_for("logout")},
     {"name":"Feed","selected":False,"link":url_for("getFeeds")},
     {"name":"My Profile","selected":True,"link":url_for("getProfile")},
     #{"name":"My Network","selected":False,"link":url_for("getFriends")},
@@ -135,16 +152,28 @@ def getProfile():
 
 #newPost
 @app.route("/post/new/",methods = ['GET','POST'])
+@login_required
 def newPost():
     options = [
+    {"name":"Log out","selected":False,"link":url_for("logout")},
     {"name":"Feed","selected":False,"link":url_for("getFeeds")},
     {"name":"My Profile","selected":False,"link":url_for("getProfile")},
     #{"name":"My Network","selected":False,"link":url_for("getFriends")},
     {"name":"New Post","selected":True,"link":url_for("newPost")}
     ]
-    return render_template("newpost.html",title="newpost",nav_options= options)
+    form = NewPostForm()
+    if form.validate_on_submit():
+        user = current_user.username
+        caption = form.Caption.data
+        message = form.message.data
+
+        new_post = NewPost(username=user, caption=caption, message=message)
+        db.session.add(new_post)
+        db.session.commit()
+        return redirect(url_for('getFeeds'))
+    return render_template("newpost.html",form=form,title="New Post",nav_options= options)
 
 
 
 if __name__=='__main__':
-	app.run(debug=True)
+	app.run(debug=True,host='0.0.0.0')

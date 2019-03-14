@@ -1,5 +1,7 @@
 {% extends "main.html" %}
 {% block content %}
-
-
+<div>
+<label>Username:</label><div>{{ current_user.username }}</div>
+<label>E-mail:</label><div>{{ current_user.email }}</div>
+</div>
 {% endblock %}
