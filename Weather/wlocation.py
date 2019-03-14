@@ -7,8 +7,8 @@ app.debug = True
 
 @app.route('/')
 def location():
-    data = requests.get('https://geoipify.whoisxmlapi.com/api/v1?apiKey=at_tO6ReNldmeViKxs7xF6Vo8bwgU1tG&ipAddress=').json()
-    city = data['location']['city']
+    data = requests.get('http://ip-api.com/json').json()
+    city = data['city']
 
     req = requests.get('http://api.openweathermap.org/data/2.5/weather?q='+ city +'&units=celsius&appid=271d1234d3f497eed5b1d80a07b3fcd1').json()
     description = req['weather'][0]['description'].upper()
